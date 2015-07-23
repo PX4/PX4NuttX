@@ -4,9 +4,9 @@
 [submodule "apps"]
 	path = apps
 	url = https://github.com/PX4-NuttX/apps.git
-[submodule "misc"]
-	path = misc
-	url = https://github.com/PX4-NuttX/misc.git
+[submodule "misc/tools"]
+	path = misc/tools
+	url = https://github.com/PX4-NuttX/tools.git
 [submodule "NxWidgets"]
 	path = NxWidgets
 	url = https://github.com/PX4-NuttX/NxWidgets.git
