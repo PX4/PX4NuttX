@@ -1,12 +1,6 @@
 [submodule "nuttx"]
 	path = nuttx
-	url = https://github.com/PX4-NuttX/nuttx.git
+	url = https://bitbucket.org/px4/nuttx.git
 [submodule "apps"]
 	path = apps
-	url = https://github.com/PX4-NuttX/apps.git
-[submodule "misc/tools"]
-	path = misc/tools
-	url = https://github.com/PX4-NuttX/tools.git
-[submodule "NxWidgets"]
-	path = NxWidgets
-	url = https://github.com/PX4-NuttX/NxWidgets.git
+	url = https://bitbucket.org/px4/apps.git
