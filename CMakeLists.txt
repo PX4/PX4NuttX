@@ -84,6 +84,46 @@ add_custom_command(OUTPUT ${NUTTX_DIR}/include/nuttx/version.h ${NUTTX_DIR}/incl
 	)
 add_custom_target(nuttx_context DEPENDS ${NUTTX_DIR}/include/nuttx/version.h)
 
+# APPS
+
+# add additional commands to nuttx builtins
+set(builtin_registry ${APPS_DIR}/builtin/registry)
+set(nuttx_builtin_list)
+foreach(module ${module_libraries})
+	get_target_property(MAIN ${module} MAIN)
+	get_target_property(STACK_MAIN ${module} STACK_MAIN)
+	get_target_property(PRIORITY ${module} PRIORITY)
+
+	if(MAIN)
+		add_custom_command(OUTPUT ${builtin_registry}/${MAIN}_main.bdat
+			COMMAND echo "{ \"${MAIN}\", ${PRIORITY}, ${STACK_MAIN}, ${MAIN}_main }," > ${builtin_registry}/${MAIN}_main.bdat
+			COMMAND cmake -E touch ${builtin_registry}/.updated
+			VERBATIM
+			)
+		list(APPEND nuttx_builtin_list ${builtin_registry}/${MAIN}_main.bdat)
+
+		add_custom_command(OUTPUT ${builtin_registry}/${MAIN}_main.pdat
+			COMMAND echo "int ${MAIN}_main(int argc, char *argv[]);" > ${builtin_registry}/${MAIN}_main.pdat
+			COMMAND cmake -E touch ${builtin_registry}/.updated
+			VERBATIM
+			)
+		list(APPEND nuttx_builtin_list ${builtin_registry}/${MAIN}_main.pdat)
+	endif()
+endforeach()
+
+# libapps.a
+add_custom_command(OUTPUT ${APPS_DIR}/libapps.a
+		${APPS_DIR}/nshlib/.built
+		${APPS_DIR}/builtin/.built
+		${APPS_DIR}/builtin/builtin_list.h
+		${APPS_DIR}/builtin/builtin_proto.h
+	COMMAND make --silent --no-print-directory -C ../apps TOPDIR="${NUTTX_DIR}" libapps.a > /dev/null
+	DEPENDS nuttx_context ${nuttx_builtin_list}
+	WORKING_DIRECTORY ${NUTTX_DIR}
+	)
+add_custom_target(nuttx_apps_build DEPENDS ${APPS_DIR}/libapps.a)
+add_library(nuttx_apps STATIC IMPORTED GLOBAL)
+set_property(TARGET nuttx_apps PROPERTY IMPORTED_LOCATION ${APPS_DIR}/libapps.a)
 
 # libboard.a
 add_custom_command(OUTPUT ${NUTTX_DIR}/arch/arm/src/board/libboard.a
@@ -96,7 +136,7 @@ add_library(nuttx_board STATIC IMPORTED GLOBAL)
 set_property(TARGET nuttx_board PROPERTY IMPORTED_LOCATION ${NUTTX_DIR}/arch/arm/src/board/libboard.a)
 
 # helper for all targets
-add_custom_target(nuttx_build DEPENDS nuttx_board_build)
+add_custom_target(nuttx_build DEPENDS nuttx_board_build nuttx_apps_build)
 function(add_nuttx_dir nuttx_lib nuttx_lib_dir kernel extra)
 	file(GLOB_RECURSE nuttx_lib_files
 		LIST_DIRECTORIES false
@@ -123,7 +163,6 @@ add_nuttx_dir(drivers drivers y -D__KERNEL__)
 add_nuttx_dir(fs fs y -D__KERNEL__)
 add_nuttx_dir(sched sched y -D__KERNEL__)
 
-add_nuttx_dir(apps ../apps n "")
 add_nuttx_dir(c libc n "")
 add_nuttx_dir(cxx libxx n "")
 add_nuttx_dir(mm mm n "")
